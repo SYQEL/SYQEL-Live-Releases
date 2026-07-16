@@ -32,14 +32,19 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       # The app + its path-dep siblings, in the exact dev layout (link:../syqel-sdk;
-      # world assets come from ../syqel-art/apps/web/public).
+      # world assets come from ../syqel-art/apps/web/public). The token goes through
+      # env + whitespace-strip: a trailing newline in the secret otherwise malforms
+      # the clone URL ("URL rejected" — bitten on the first run).
       - name: Clone private source (live + sdk + art assets)
         shell: bash
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
           rm -rf work && mkdir work
+          TOKEN=$(printf %s "$GITLAB_TOKEN" | tr -d '[:space:]')
           for r in syqel-live syqel-sdk syqel-art; do
             git clone --depth 1 --branch main \
-              "https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/syqel/$r.git" "work/$r"
+              "https://oauth2:${TOKEN}@gitlab.com/syqel/$r.git" "work/$r"
           done
 
       - name: Preflight SDKs (macOS runner)
