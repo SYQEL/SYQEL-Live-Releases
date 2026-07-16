@@ -1,0 +1,150 @@
+# SYQEL Live — release workflow for the PUBLIC repo github.com/SYQEL/SYQEL-Live-Releases.
+# Copy this file to `.github/workflows/release.yml` in THAT repo (Art's release-repo
+# pattern: the public repo holds only the workflow + published artifacts; source stays
+# on private GitLab and is cloned at build time). See docs/RELEASING.md for setup.
+#
+# macOS builds on a SELF-HOSTED runner on the dev Mac (labels: self-hosted, macOS, live):
+# the NDI Apple SDK has no anonymously-downloadable installer (Windows' does), and the
+# runner's keychain already holds the Developer ID cert — tauri.conf.json's
+# signingIdentity signs in place, no APPLE_CERTIFICATE export needed.
+# Windows builds on GitHub-hosted runners; both SDKs install from public URLs.
+
+name: release
+on:
+  push:
+    tags: ['v*'] # git tag v0.1.0 && git push --tags (version must match tauri.conf.json)
+
+jobs:
+  build:
+    permissions:
+      contents: write # publish the GitHub Release on this repo
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macos
+            runner: [self-hosted, macOS, live]
+            args: --target universal-apple-darwin
+          - name: windows
+            runner: windows-latest
+            # ci-sign.conf.json is written by the "Enable Windows signing" step
+            args: --config ci-sign.conf.json
+    runs-on: ${{ matrix.runner }}
+    steps:
+      # The app + its path-dep siblings, in the exact dev layout (link:../syqel-sdk;
+      # world assets come from ../syqel-art/apps/web/public).
+      - name: Clone private source (live + sdk + art assets)
+        shell: bash
+        run: |
+          rm -rf work && mkdir work
+          for r in syqel-live syqel-sdk syqel-art; do
+            git clone --depth 1 --branch main \
+              "https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/syqel/$r.git" "work/$r"
+          done
+
+      - name: Preflight SDKs (macOS runner)
+        if: matrix.name == 'macos'
+        run: |
+          test -d "/Library/NDI SDK for Apple"
+          test -d /Library/Frameworks/Syphon.framework
+
+      - name: Install NDI 6 SDK (Windows)
+        if: matrix.name == 'windows'
+        shell: pwsh
+        run: |
+          curl.exe -sL -o ndi-sdk.exe "https://downloads.ndi.tv/SDK/NDI_SDK/NDI 6 SDK.exe"
+          Start-Process -Wait .\ndi-sdk.exe -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART'
+          if (!(Test-Path 'C:\Program Files\NDI\NDI 6 SDK\Lib\x64\Processing.NDI.Lib.x64.lib')) {
+            throw 'NDI SDK missing after install'
+          }
+
+      - name: Install Spout SDK binaries (Windows)
+        if: matrix.name == 'windows'
+        shell: pwsh
+        run: |
+          curl.exe -sL -o spout.zip "https://github.com/leadedge/Spout2/releases/download/2.007.017/Spout-SDK-binaries_2-007-017_1.zip"
+          Expand-Archive spout.zip -DestinationPath C:\libs\Spout-SDK-binaries
+          if (!(Test-Path 'C:\libs\Spout-SDK-binaries\Libs_2-007-017\MD\lib\SpoutDX_static.lib')) {
+            Get-ChildItem -Recurse C:\libs\Spout-SDK-binaries | Select-Object -First 20
+            throw 'Spout SDK layout unexpected — fix DestinationPath or SPOUT_SDK_DIR'
+          }
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.name == 'macos' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Bundle world assets (sync-assets.sh needs rsync; plain cp works everywhere)
+        shell: bash
+        run: |
+          mkdir -p work/syqel-live/public
+          cp -R work/syqel-art/apps/web/public/models work/syqel-live/public/
+          cp -R work/syqel-art/apps/web/public/env work/syqel-live/public/
+
+      - name: Install dependencies (sdk first — provides three)
+        shell: bash
+        run: |
+          (cd work/syqel-sdk && pnpm install --frozen-lockfile)
+          (cd work/syqel-live && pnpm install --frozen-lockfile)
+
+      # Windows code-signing via Azure Trusted Signing (same account as Art). The
+      # signCommand lives in a CI-only config overlay so local PC builds stay unsigned.
+      - name: Install trusted-signing-cli (Windows)
+        if: matrix.name == 'windows'
+        run: cargo install trusted-signing-cli
+
+      - name: Enable Windows signing (config overlay)
+        if: matrix.name == 'windows'
+        shell: bash
+        run: |
+          cat > work/syqel-live/src-tauri/ci-sign.conf.json <<'EOF'
+          {"bundle":{"windows":{"signCommand":"trusted-signing-cli -e https://eus.codesigning.azure.net/ -a SYQEL -c SYQEL %1"}}}
+          EOF
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          # updater artifact signature (layer 2)
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # macOS notarization (signing itself uses the runner keychain via
+          # tauri.conf.json signingIdentity). App Store Connect API key flavor:
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ secrets.APPLE_API_KEY_PATH }}
+          # Windows signing (layer 1) — Azure Trusted Signing
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        with:
+          projectPath: work/syqel-live
+          tagName: ${{ github.ref_name }}
+          releaseName: 'SYQEL Live ${{ github.ref_name }}'
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true # latest.json — the updater endpoint
+          args: ${{ matrix.args }}
+
+      # A build without the SDKs "succeeds" with stub senders (build.rs design, keeps CI
+      # green) — but a RELEASE without outputs is a brick. Fail loudly instead.
+      - name: Verify senders linked (macOS)
+        if: matrix.name == 'macos'
+        shell: bash
+        run: |
+          BIN="work/syqel-live/src-tauri/target/universal-apple-darwin/release/bundle/macos/SYQEL Live.app/Contents/MacOS/syqel-live"
+          otool -L "$BIN" | grep -q libndi
+          otool -L "$BIN" | grep -q Syphon
+
+      - name: Verify senders linked (Windows)
+        if: matrix.name == 'windows'
+        shell: pwsh
+        run: |
+          $exe = 'work\syqel-live\src-tauri\target\release\syqel-live.exe'
+          foreach ($m in 'Processing.NDI', 'spoutDX') {
+            if (!(Select-String -Path $exe -Pattern $m -Quiet)) { throw "sender marker '$m' missing — stub build" }
+          }
+
+# NOTE: bump `version` in the source repo's src-tauri/tauri.conf.json to match each tag —
+# installed apps compare their version against latest.json's.
