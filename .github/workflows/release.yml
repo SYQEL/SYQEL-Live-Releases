@@ -53,6 +53,22 @@ jobs:
           test -d "/Library/NDI SDK for Apple"
           test -d /Library/Frameworks/Syphon.framework
 
+      # The runner's launchd context can't do keychain UI (errSecInteractionNotAllowed),
+      # so codesign can't reach the Developer ID key without an explicit unlock +
+      # a partition-list ACL that whitelists codesign non-interactively.
+      - name: Unlock signing keychain (macOS runner)
+        if: matrix.name == 'macos'
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.MAC_KEYCHAIN_PASSWORD }}
+        run: |
+          if [ -z "$KEYCHAIN_PASSWORD" ]; then
+            echo "MAC_KEYCHAIN_PASSWORD secret not set — codesign will fail" >&2
+            exit 1
+          fi
+          KC="$HOME/Library/Keychains/login.keychain-db"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KC"
+          security set-key-partition-list -S 'apple-tool:,apple:,codesign:' -s -k "$KEYCHAIN_PASSWORD" "$KC" >/dev/null 2>&1 || true
+
       - name: Install NDI 6 SDK (Windows)
         if: matrix.name == 'windows'
         shell: pwsh
