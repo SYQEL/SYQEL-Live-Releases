@@ -86,7 +86,17 @@ jobs:
           innoextract .\ndi-sdk.exe -d ndi-x --silent
           New-Item -ItemType Directory -Force 'C:\Program Files\NDI' | Out-Null
           Copy-Item -Recurse -Force .\ndi-x\app 'C:\Program Files\NDI\NDI 6 SDK'
-          if (!(Test-Path 'C:\Program Files\NDI\NDI 6 SDK\Lib\x64\Processing.NDI.Lib.x64.lib')) {
+          # the runtime DLL isn't at Bin\x64 in the raw {app} payload (the real
+          # installer places it) — find it in the extracted tree and put it
+          # where build.rs + tauri.windows.conf.json expect it
+          $dll = 'C:\Program Files\NDI\NDI 6 SDK\Bin\x64\Processing.NDI.Lib.x64.dll'
+          if (!(Test-Path $dll)) {
+            $found = Get-ChildItem -Recurse .\ndi-x -Filter 'Processing.NDI.Lib.x64.dll' | Select-Object -First 1
+            if (!$found) { Get-ChildItem -Recurse .\ndi-x -Filter '*.dll' | Select-Object -First 20; throw 'NDI runtime DLL not in extracted SDK' }
+            New-Item -ItemType Directory -Force (Split-Path $dll) | Out-Null
+            Copy-Item $found.FullName $dll
+          }
+          if (!(Test-Path 'C:\Program Files\NDI\NDI 6 SDK\Lib\x64\Processing.NDI.Lib.x64.lib') -or !(Test-Path $dll)) {
             Get-ChildItem -Recurse .\ndi-x | Select-Object -First 25
             throw 'NDI SDK missing after extract — layout unexpected'
           }
