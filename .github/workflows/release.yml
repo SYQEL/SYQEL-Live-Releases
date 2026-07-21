@@ -132,11 +132,11 @@ jobs:
           # updater artifact signature (layer 2)
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # macOS notarization (signing itself uses the runner keychain via
-          # tauri.conf.json signingIdentity). App Store Connect API key flavor:
-          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_PATH: ${{ secrets.APPLE_API_KEY_PATH }}
+          # macOS signing uses the runner keychain (tauri.conf signingIdentity);
+          # notarization env (APPLE_API_*) comes from the RUNNER's local .env —
+          # the key lives on that machine, so GitHub never middlemans the path
+          # (a mangled APPLE_API_KEY_PATH secret once fed the key ID to
+          # notarytool as a file path).
           # Windows signing (layer 1) — Azure Trusted Signing
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
