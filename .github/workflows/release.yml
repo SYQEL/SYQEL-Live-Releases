@@ -57,7 +57,9 @@ jobs:
         if: matrix.name == 'windows'
         shell: pwsh
         run: |
-          curl.exe -sL -o ndi-sdk.exe "https://downloads.ndi.tv/SDK/NDI_SDK/NDI 6 SDK.exe"
+          # %20, not literal spaces — curl rejects the malformed URL (silently under -s)
+          curl.exe -sfL -o ndi-sdk.exe "https://downloads.ndi.tv/SDK/NDI_SDK/NDI%206%20SDK.exe"
+          if (!(Test-Path .\ndi-sdk.exe)) { throw 'NDI SDK download failed' }
           Start-Process -Wait .\ndi-sdk.exe -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART'
           if (!(Test-Path 'C:\Program Files\NDI\NDI 6 SDK\Lib\x64\Processing.NDI.Lib.x64.lib')) {
             throw 'NDI SDK missing after install'
