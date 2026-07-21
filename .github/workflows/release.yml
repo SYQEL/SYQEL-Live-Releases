@@ -130,11 +130,12 @@ jobs:
         if: matrix.name == 'windows'
         run: cargo install trusted-signing-cli
 
+      # --config resolves relative to the PROJECT root (work/syqel-live), not src-tauri
       - name: Enable Windows signing (config overlay)
         if: matrix.name == 'windows'
         shell: bash
         run: |
-          cat > work/syqel-live/src-tauri/ci-sign.conf.json <<'EOF'
+          cat > work/syqel-live/ci-sign.conf.json <<'EOF'
           {"bundle":{"windows":{"signCommand":"trusted-signing-cli -e https://eus.codesigning.azure.net/ -a SYQEL -c SYQEL %1"}}}
           EOF
 
