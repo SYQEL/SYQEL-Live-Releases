@@ -95,8 +95,9 @@ jobs:
         if: matrix.name == 'windows'
         shell: pwsh
         run: |
-          curl.exe -sL -o spout.zip "https://github.com/leadedge/Spout2/releases/download/2.007.017/Spout-SDK-binaries_2-007-017_1.zip"
-          Expand-Archive spout.zip -DestinationPath C:\libs\Spout-SDK-binaries
+          curl.exe -sfL -o spout.zip "https://github.com/leadedge/Spout2/releases/download/2.007.017/Spout-SDK-binaries_2-007-017_1.zip"
+          # the zip already roots at Spout-SDK-binaries/ — extract into C:\libs
+          Expand-Archive spout.zip -DestinationPath C:\libs
           if (!(Test-Path 'C:\libs\Spout-SDK-binaries\Libs_2-007-017\MD\lib\SpoutDX_static.lib')) {
             Get-ChildItem -Recurse C:\libs\Spout-SDK-binaries | Select-Object -First 20
             throw 'Spout SDK layout unexpected — fix DestinationPath or SPOUT_SDK_DIR'
