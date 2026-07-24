@@ -1,0 +1,75 @@
+# Copy this to `.github/workflows/sync-to-r2.yml` in EACH product releases repo:
+#   SYQEL/SYQEL-Live-Releases, SYQEL/SYQEL-Art-Releases, SYQEL/SYQEL-Desktop-Releases
+#   (and SYQEL-Studio-Releases when it exists).
+#
+# On every published GitHub Release it copies that release's installers to the
+# syqel-downloads R2 bucket under STABLE keys, so download.syqel.com/<product>/<platform>
+# always serves the newest build. The file is repo-agnostic — it picks the product +
+# asset->key mapping from the repo name, so the same file works in all repos.
+#
+# One-time prerequisite (per repo, or an org-level secret/var):
+#   secret CLOUDFLARE_API_TOKEN  — a Cloudflare token scoped to R2 Storage: Edit on SYQEL INC
+#   (CLOUDFLARE_ACCOUNT_ID defaults below; override with a repo/org variable if desired)
+
+name: sync-to-r2
+on:
+  release:
+    types: [published]
+  workflow_dispatch: {} # manually re-sync the current latest release
+
+concurrency: sync-to-r2 # serialize manifest read-modify-write across products
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy latest installers to R2 (stable keys) + update manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || 'ad0ed033f2e46cbd7c1f4c6645796616' }}
+          REPO: ${{ github.repository }}
+          BUCKET: syqel-downloads
+        shell: bash
+        run: |
+          set -euo pipefail
+          W="npx --yes wrangler@4"
+
+          # product <- repo, and the (gh-download glob : R2 key : content-type) mapping.
+          case "$REPO" in
+            *SYQEL-Live-Releases)    PRODUCT=live;    MAP=( "*_universal.dmg|live/SYQEL-Live-mac.dmg|application/x-apple-diskimage" "*_x64-setup.exe|live/SYQEL-Live-windows.exe|application/octet-stream" ) ;;
+            *SYQEL-Art-Releases)     PRODUCT=art;     MAP=( "*_universal.dmg|art/SYQEL-Art-mac.dmg|application/x-apple-diskimage" "*_x64-setup.exe|art/SYQEL-Art-windows.exe|application/octet-stream" ) ;;
+            *SYQEL-Desktop-Releases) PRODUCT=desktop; MAP=( "*-arm64.pkg|desktop/SYQEL-Desktop-mac-arm64.pkg|application/octet-stream" "*-x64.pkg|desktop/SYQEL-Desktop-mac-intel.pkg|application/octet-stream" "*-x64.exe|desktop/SYQEL-Desktop-windows.exe|application/octet-stream" ) ;;
+            *SYQEL-Studio-Releases)  PRODUCT=studio;  MAP=( "*_universal.dmg|studio/SYQEL-Studio-mac.dmg|application/x-apple-diskimage" "*_x64-setup.exe|studio/SYQEL-Studio-windows.exe|application/octet-stream" ) ;;
+            *) echo "::error::Unmapped repo $REPO"; exit 1 ;;
+          esac
+
+          # Resolve the tag: the release that triggered us, or the latest for manual runs.
+          TAG="${{ github.event.release.tag_name }}"
+          [ -z "$TAG" ] && TAG=$(gh release view -R "$REPO" --json tagName --jq .tagName)
+          VERSION="${TAG#v}"
+          echo "Syncing $PRODUCT $TAG -> R2 $BUCKET"
+
+          mkdir -p dist
+          for entry in "${MAP[@]}"; do
+            IFS='|' read -r glob key ctype <<< "$entry"
+            rm -f dist/*
+            if ! gh release download "$TAG" -R "$REPO" -p "$glob" -D dist 2>/dev/null; then
+              echo "::warning::no asset matching '$glob' in $TAG — skipping $key"; continue
+            fi
+            f=$(ls dist/ | head -1); [ -z "$f" ] && { echo "::warning::empty match $glob"; continue; }
+            echo "  $f  ->  $key"
+            $W r2 object put "$BUCKET/$key" --file "dist/$f" --content-type "$ctype" --remote
+          done
+
+          # Read-modify-write the versions manifest so the page can show "Latest: vX".
+          $W r2 object get "$BUCKET/manifest.json" --file manifest.json --remote 2>/dev/null || echo '{}' > manifest.json
+          PRODUCT="$PRODUCT" VERSION="$VERSION" TAG="$TAG" node -e '
+            const fs=require("fs");
+            const m=JSON.parse(fs.readFileSync("manifest.json","utf8")||"{}");
+            m.products=m.products||{};
+            m.products[process.env.PRODUCT]={version:process.env.VERSION,tag:process.env.TAG,updated:new Date().toISOString()};
+            fs.writeFileSync("manifest.json",JSON.stringify(m,null,2));
+          '
+          $W r2 object put "$BUCKET/manifest.json" --file manifest.json --content-type application/json --remote
+          echo "Done."
