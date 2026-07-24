@@ -180,6 +180,15 @@ jobs:
           projectPath: work/syqel-live
           tagName: ${{ github.ref_name }}
           releaseName: 'SYQEL Live ${{ github.ref_name }}'
+          releaseBody: |
+            **SYQEL Live** — the professional audio-responsive visualizer for DJs & VJs.
+
+            Download the installer for your platform below:
+
+            - **macOS** — universal (Apple Silicon + Intel)
+            - **Windows** — 64-bit
+
+            SYQEL Live checks for updates on launch and installs them with one click, so you're always on the latest version.
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: true # latest.json — the updater endpoint
