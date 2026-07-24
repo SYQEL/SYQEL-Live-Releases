@@ -35,14 +35,17 @@ jobs:
       # world assets come from ../syqel-art/apps/web/public). The token goes through
       # env + whitespace-strip: a trailing newline in the secret otherwise malforms
       # the clone URL ("URL rejected" — bitten on the first run).
-      - name: Clone private source (live + sdk + art assets)
+      # syqel-live consumes the SDK as PINNED published @syqel/* packages from GitHub
+      # Packages (switched 2026-07-23) — it no longer builds against ../syqel-sdk src.
+      # We still clone syqel-art for the bundled world assets (models + env).
+      - name: Clone private source (live + art assets)
         shell: bash
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
         run: |
           rm -rf work && mkdir work
           TOKEN=$(printf %s "$GITLAB_TOKEN" | tr -d '[:space:]')
-          for r in syqel-live syqel-sdk syqel-art; do
+          for r in syqel-live syqel-art; do
             git clone --depth 1 --branch main \
               "https://oauth2:${TOKEN}@gitlab.com/syqel/$r.git" "work/$r"
           done
@@ -128,11 +131,19 @@ jobs:
           cp -R work/syqel-art/apps/web/public/models work/syqel-live/public/
           cp -R work/syqel-art/apps/web/public/env work/syqel-live/public/
 
-      - name: Install dependencies (sdk first — provides three)
+      # @syqel/* resolve from GitHub Packages; the repo's .npmrc sets the registry but
+      # not auth (never committed). Append the read:packages token so pnpm can fetch
+      # them — essential on the GitHub-hosted Windows runner (the self-hosted mac has
+      # it in ~/.npmrc already, but appending here is harmless + explicit).
+      - name: Authenticate to GitHub Packages
         shell: bash
-        run: |
-          (cd work/syqel-sdk && pnpm install --frozen-lockfile)
-          (cd work/syqel-live && pnpm install --frozen-lockfile)
+        env:
+          GH_PACKAGES_READ_TOKEN: ${{ secrets.GH_PACKAGES_READ_TOKEN }}
+        run: printf '//npm.pkg.github.com/:_authToken=%s\n' "$GH_PACKAGES_READ_TOKEN" >> work/syqel-live/.npmrc
+
+      - name: Install dependencies
+        shell: bash
+        run: (cd work/syqel-live && pnpm install --frozen-lockfile)
 
       # Windows code-signing via Azure Trusted Signing (same account as Art). The
       # signCommand lives in a CI-only config overlay so local PC builds stay unsigned.
