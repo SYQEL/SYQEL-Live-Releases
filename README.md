@@ -1,18 +1,17 @@
 <p align="center">
-  <img src=".github/hero.png" alt="SYQEL Live rendering a music-reactive visual world" width="820" />
+  <img src=".github/hero.png" alt="SYQEL Live — a DJ on a virtual stage surrounded by music-reactive visuals" width="820" />
 </p>
 
 <h1 align="center">SYQEL Live</h1>
 
 <p align="center">
-  <b>The professional audio-responsive visualizer for DJs&nbsp;&amp;&nbsp;VJs.</b><br/>
-  Real-time visuals that listen to your music — on stage, in the booth, or on stream.
+  <b>Stream your DJ set on a virtual stage, with visuals that move to your music.</b><br/>
+  Webcam, stage and audio-reactive visuals in one app — live to every platform at once.
 </p>
 
 <p align="center">
   <a href="https://download.syqel.com/live/mac"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-Download-black?logo=apple&logoColor=white" /></a>
   <a href="https://download.syqel.com/live/windows"><img alt="Download for Windows" src="https://img.shields.io/badge/Windows-Download-0078D4?logo=gitforwindows&logoColor=white" /></a>
-  <a href="https://apps.apple.com/app/id6791380605"><img alt="Mac App Store" src="https://img.shields.io/badge/Mac%20App%20Store-View-blue?logo=appstore&logoColor=white" /></a>
   <a href="https://github.com/SYQEL/SYQEL-Live-Releases/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/SYQEL/SYQEL-Live-Releases?label=latest" /></a>
 </p>
 
@@ -20,96 +19,90 @@
 
 ## What is SYQEL Live?
 
-SYQEL Live turns whatever your audience is hearing into a live, beat-locked visual show.
-It listens to your computer's audio — the DJ software, a streaming service, any app, or a
-line input — analyzes it in real time (energy, bass, BPM, and per-instrument detail like
-kick, bass, and hats), and drives a catalogue of generative 3D worlds that move with the
-music. Kick hits flash, basslines glow, hi-hats sparkle — every world reacts to the parts
-of the track, not just its volume.
+SYQEL Live puts you on a virtual stage for your live stream. Your webcam goes in the
+middle, the stage's screens fill with visuals that react to the music you're playing,
+and the whole show streams to Kick, Twitch, YouTube, Mixcloud and more — at the same
+time, from one app.
 
-Built for the booth: send the output to a projector or LED wall, pipe it into Resolume,
-OBS, vMix, or a media server over **NDI**, and drive it hands-free or from your MIDI
-controller.
+It listens to your DJ software (or any audio on your computer), follows the beat, the
+bass and the drums, and drives the visuals with them. No OBS scenes to wire up, no
+virtual cables: pick a stage, turn on your camera, press **Start stream**.
 
 ## Features
 
-### 🎵 Real audio in, real reactivity out
-- **System-audio capture** — visualize everything the machine is playing (macOS
-  ScreenCaptureKit loopback, Windows WASAPI loopback). No virtual audio cables needed.
-- **Per-app capture** — lock onto just your DJ software or player, ignoring everything else.
-- **Per-instrument reactivity** — the analyzer separates the mix into musical sources
-  (kick, bass, melody, hats…) and every visual world uses them; beat-synced motion lands
-  on the grid, not "roughly near it."
+### 📡 Go live everywhere
+- **Multistream** to Kick, Twitch, YouTube, Mixcloud Live, Facebook Live, X, LinkedIn Live,
+  Trovo or any custom RTMP server — all at once, from a single encode.
+- **One-click connect** for Kick and Twitch — sign in and you're set, no stream keys to copy.
+- **Record while you stream** (or record on its own) to an MP4 that stays playable even if
+  the app quits mid-set.
+- **Connection test** recommends the best quality your upload can carry.
+- **Snapshot** saves exactly what your viewers see.
 
-### 🌍 A living catalogue of visual worlds
-- **38+ generative 3D worlds** — from oceans, canyons, and star fields to neon cities,
-  sacred geometry, and digital rain — all audio-reactive, all running in real time.
-- **Over-the-air updates** — new worlds and engine improvements arrive automatically,
-  no reinstall. The catalogue keeps growing while the app stays put.
-- **Fully offline-capable** — worlds and assets ship in the app and cache locally; a lost
-  backstage connection never kills the show.
+### 🎤 Your stage
+- **12 virtual stages** — from a neon club and a rooftop at sunset to a festival main stage,
+  a beach club, Neo Tokyo and the deep sea.
+- **Webcam with background removal** — green screen for the cleanest edges, or automatic
+  cut-out with no screen at all.
+- **Layers and scenes** — arrange visuals, stage, webcam and your own images; save scenes
+  and switch between them during your set.
+
+### 🌈 Visuals that listen
+- **Over 1,300 visuals** across 66 packs, plus generative 3D worlds — every one reacts to
+  the kick, the bass and the hats, not just the volume.
+- **Your own visuals** made in [SYQEL Studio](https://studio.syqel.com) sync straight in.
+- **Playlists** mix worlds and visuals, with Cut, Fade, Zoom and Glitch transitions,
+  shuffle and auto-play — or let SYQEL pick to the music.
 
 ### 🎛 Built for performing
-- **Show modes** — *Auto* (an intelligent director journeys through the catalogue),
-  *Playlist* (your curated set order with per-list hold times), or *Pin* (lock one world).
-- **Playlists / setlists** — build and reorder sets for each gig; manual "next" is a clean
-  hard cut when you want it.
-- **MIDI control** — hook up your controller and drive the show from hardware.
-- **Overlays** — put your logo or event branding over the visuals.
-
-### 📺 Professional output
-- **Dedicated output window** — full-screen the visuals on any connected display or
-  projector at full resolution, with the control surface staying on your screen.
-- **NDI®** — the app is an NDI source on your network: Resolume, OBS, vMix, media
-  servers, and LED processors pick it up directly.
-- **Syphon** (macOS, direct download) and **Spout** (Windows) — zero-configuration GPU
-  texture sharing into other visual software on the same machine.
-
-### 🔄 Always current
-- The app checks for updates at launch and installs them with one click — never
-  mid-show, never automatic. Visual content updates separately over the air.
+- **Overlays** — Now Playing, DJ name tag, countdown, logo, sponsor and full-screen intro,
+  each on a key (1–6).
+- **Audio mixer** — your DJ audio, a talk-over mic and system audio, each with its own meter.
+- **MIDI and hotkeys** for every action.
+- **Venue output** — fullscreen on a projector or LED wall, **NDI®** to Resolume, OBS or
+  vMix, **Syphon** (macOS) and **Spout** (Windows).
+- **Stream analytics** — upload over time, destination health and a timeline of every
+  stream, with export.
 
 ## Downloads
 
-| Platform | Direct download | Store |
-|---|---|---|
-| **macOS** (Apple Silicon + Intel, macOS 13+) | [download.syqel.com/live/mac](https://download.syqel.com/live/mac) | [Mac App Store](https://apps.apple.com/app/id6791380605) |
-| **Windows** (64-bit, Windows 10+) | [download.syqel.com/live/windows](https://download.syqel.com/live/windows) | Microsoft Store — coming soon |
+| Platform | Download |
+|---|---|
+| **macOS** (Apple Silicon + Intel, macOS 13+) | [download.syqel.com/live/mac](https://download.syqel.com/live/mac) |
+| **Windows** (64-bit, Windows 10+) | [download.syqel.com/live/windows](https://download.syqel.com/live/windows) |
 
-All installers are code-signed and notarized. The direct downloads always point at the
-newest release; older versions live on the [Releases](https://github.com/SYQEL/SYQEL-Live-Releases/releases) page.
+All installers are code-signed (and notarized on macOS). The downloads always point at
+the newest release; older versions are on the [Releases](https://github.com/SYQEL/SYQEL-Live-Releases/releases) page.
+The app checks for updates when it opens and installs them with one click — never mid-set.
 
-> **Which build should I pick?** The direct macOS download includes **Syphon** output;
-> the Mac App Store build offers the same show features with **NDI** for interop
-> (Syphon isn't available to sandboxed App Store apps). If you feed Resolume or
-> MadMapper, both ingest NDI natively — either build works.
+## Free and paid
 
-## Free vs. paid
+SYQEL Live is **free to use** — streaming, recording and every visual pack — on a choice of
+virtual stages, with the SYQEL logo in the booth.
 
-Every visual world is playable on the free tier — the output carries a SYQEL watermark.
-Going paid removes the watermark. Subscriptions and one-off **Gig Passes** (24h / 48h —
-for the night you actually need it) are available in-app.
+- **SYQEL Live** — **$25/month** or **$249/year**: no watermark on your stream, recordings and
+  venue outputs, every layout and premium stage, your own logos, and 15 AI credits a month.
+- **Gig Pass** — **$20** for 24 hours in SYQEL Live and SYQEL Desktop, no subscription.
 
 ## System requirements
 
-- **macOS 13 Ventura or later** — Apple Silicon or Intel. Screen-Recording permission is
-  requested once for system-audio capture (macOS routes app audio through it; no
-  microphone involved).
+- **macOS 13 Ventura or later** — Apple Silicon or Intel. macOS asks once for the camera,
+  the microphone (for audio inputs) and Screen Recording (to hear system and app audio).
 - **Windows 10 or later, 64-bit** — WebView2 (preinstalled on Windows 11; the installer
   handles it on Windows 10).
-- A discrete or modern integrated GPU is recommended for 1080p60 output.
+- A webcam, and about 7 Mbps of upload per 1080p destination. A discrete or modern
+  integrated GPU is recommended for 1080p60.
 
 ## About this repository
 
-This public repository hosts the **installers, release notes, and update feed** for
-SYQEL Live. The application source is developed in a private repository; releases are
-built, signed, and published here by CI (macOS universal + Windows x64, tag-triggered).
+This public repository hosts the **installers, release notes and update feed** for
+SYQEL Live. Releases are built, signed and published here automatically.
 
 - **Website:** [syqel.com](https://syqel.com)
 - **All SYQEL apps:** [download.syqel.com](https://download.syqel.com)
-- **Support:** [syqel.com](https://syqel.com) · or open an issue here for
-  install/update problems with a release
+- **Help & support:** [syqel.com/support](https://syqel.com/support) — or open an issue here
+  for install or update problems with a release
 
 ---
 
-<p align="center">NDI® is a registered trademark of Vizrt NDI AB. Syphon and Spout are open frameworks of their respective projects.</p>
+<p align="center">NDI® is a registered trademark of Vizrt NDI AB. Syphon and Spout are open frameworks of their respective projects. Kick, Twitch, YouTube, Mixcloud and other service names are trademarks of their owners.</p>
