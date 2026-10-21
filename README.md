@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/hero.png" alt="SYQEL Live — a DJ on a virtual stage surrounded by music-reactive visuals" width="820" />
+  <img src=".github/hero.png" alt="SYQEL Live — the Live screen: a DJ on a virtual stage with music-reactive visuals, multistreaming to Kick, Twitch and YouTube" width="820" />
 </p>
 
 <h1 align="center">SYQEL Live</h1>
